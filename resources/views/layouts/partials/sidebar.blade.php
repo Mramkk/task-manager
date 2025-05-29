@@ -53,8 +53,8 @@
                 </li>
                 <li class="side-nav-item">
                     <a href="#" class="side-nav-link">
-                        <i class="uil-calender"></i>
-                        <span> Orders </span>
+                       <i class="uil-analysis"></i>
+                        <span> Activities </span>
                     </a>
                 </li>
 

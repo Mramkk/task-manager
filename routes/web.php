@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Activity\ActivityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -11,9 +12,9 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/logout', function () {
-        auth()->logout();
-        return redirect()->route('login.view')->with('success', 'Logged out successfully!');
-    })->name('logout');
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::prefix('activity')->name('activity.')->group(function () {
+        Route::get('/', [ActivityController::class, 'index'])->name('index');
+    });
 });
