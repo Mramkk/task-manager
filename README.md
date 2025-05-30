@@ -7,6 +7,47 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+
+## Setup Instructions
+
+To get started with this project, follow these steps:
+
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/task-manager.git
+    cd task-manager
+    ```
+
+2. **Install dependencies:**
+    ```bash
+    composer install
+    npm install
+    ```
+
+3. **Copy the example environment file and set your configuration:**
+    ```bash
+    cp .env.example .env
+    ```
+
+4. **Generate the application key:**
+    ```bash
+    php artisan key:generate
+    ```
+
+5. **Set up your database in the `.env` file.**
+
+6. **Run migrations:**
+    ```bash
+    php artisan migrate
+    ```
+
+7. **Start the development server:**
+    ```bash
+    php artisan serve
+    ```
+
+Your application should now be running at [http://localhost:8000](http://localhost:8000).
+
 ## Stack
 
 Tech stack used:
