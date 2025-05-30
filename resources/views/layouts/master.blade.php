@@ -7,7 +7,7 @@
     @yield('title')
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <!-- csrf token-->
+    <!-- csrf token-->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- csrf token-->
     <!-- App favicon -->
@@ -90,6 +90,22 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('js')
     @include('sweetalert::alert')
+    <script>
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            },
+            // didClose: () => {
+            //     // location.reload()
+            // }
+        });
+    </script>
 
 </body>
 

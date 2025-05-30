@@ -46,13 +46,13 @@
 
             <li class="side-nav-title">Navigation</li>
             <li class="side-nav-item">
-                    <a href="#" class="side-nav-link">
+                    <a href="{{route('dashboard')}}" class="side-nav-link">
                         <i class="uil-home-alt"></i>
                         <span> Dashboard </span>
                     </a>
                 </li>
                 <li class="side-nav-item">
-                    <a href="#" class="side-nav-link">
+                    <a href="{{route('activity.index')}}" class="side-nav-link active">
                        <i class="uil-analysis"></i>
                         <span> Activities </span>
                     </a>
