@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Task;
 
+use App\Events\UserActivityLogged;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
@@ -24,6 +27,9 @@ class TaskController extends Controller
                 $query->where("status", $request->status);
             }
             $data = $query->paginate(10);
+            Event::dispatch(new UserActivityLogged(
+                "Task list view by" . Auth::user()->email,
+            ));
             return response()->json([
                 'status' => 'success',
                 'data' => $data,
@@ -55,7 +61,7 @@ class TaskController extends Controller
         // Logic to store a new task
         DB::beginTransaction();
         try {
-            Task::updateOrCreate(
+            $data = Task::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'project_id' => $request->project_id,
@@ -65,10 +71,24 @@ class TaskController extends Controller
                 ]
             );
             DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Task saved successfully',
-            ]);
+            if (empty($request->id)) {
+                Event::dispatch(new UserActivityLogged(
+                    $data->title . " task created successfully by " . Auth::user()->email,
+                ));
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Task created successfully',
+                ]);
+            } else {
+                Event::dispatch(new UserActivityLogged(
+                    $data->title . " task updated successfully by " . Auth::user()->email,
+                ));
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Task updated successfully',
+                ]);
+            }
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
@@ -115,6 +135,9 @@ class TaskController extends Controller
             $task->status = $request->status;
             $task->save();
             DB::commit();
+            Event::dispatch(new UserActivityLogged(
+                "Task Id : " . $task->id . " status updated by " . Auth::user()->email,
+            ));
             return response()->json([
                 'status' => 'success',
                 'message' => "Task status updated successfully",
@@ -132,7 +155,11 @@ class TaskController extends Controller
     public function delete($id)
     {
         try {
-            Task::findOrFail($id)->delete();
+            $task = Task::findOrFail($id);
+            Event::dispatch(new UserActivityLogged(
+                "Task Id : " . $id . " deleted by " . Auth::user()->email,
+            ));
+            $task->delete();
             return response()->json([
                 'status' => 'success',
                 'message' => "Task deleted successfully !",

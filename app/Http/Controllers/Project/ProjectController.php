@@ -123,7 +123,7 @@ class ProjectController extends Controller
         try {
             $data = Project::findOrFail($id);
             Event::dispatch(new UserActivityLogged(
-                $data->name . " project deleted successfully !" . Auth::user()->email,
+                $data->name . " project deleted successfully ! " . Auth::user()->email,
             ));
             $data->delete();
             return response()->json([
