@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Project;
 
+use App\Events\UserActivityLogged;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
@@ -19,6 +21,9 @@ class ProjectController extends Controller
                 ->withCount('pendingTasks')
                 ->withCount('completedTasks')
                 ->paginate(10);
+            Event::dispatch(new UserActivityLogged(
+                "project list view by " . Auth::user()->email,
+            ));
             return response()->json([
                 'status' => 'success',
                 'data' => $data,
@@ -48,7 +53,7 @@ class ProjectController extends Controller
         DB::beginTransaction();
 
         try {
-            Project::updateOrCreate(
+            $data = Project::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'name' => $request->name,
@@ -58,10 +63,23 @@ class ProjectController extends Controller
             );
 
             DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => "Project save successfully !",
-            ]);
+            if (empty($request->id)) {
+                Event::dispatch(new UserActivityLogged(
+                    $data->name . " project created successfully !" . Auth::user()->email,
+                ));
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Project created successfully !",
+                ]);
+            } else {
+                Event::dispatch(new UserActivityLogged(
+                    $data->name . " project updated successfully !" . Auth::user()->email,
+                ));
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Project updated successfully !",
+                ]);
+            }
         } catch (\Throwable $th) {
             DB::rollBack();
             return response()->json([
@@ -90,6 +108,9 @@ class ProjectController extends Controller
     {
         try {
             $data = Project::findOrFail($id);
+            Event::dispatch(new UserActivityLogged(
+                $data->name . " project detail view by " . Auth::user()->email,
+            ));
             return view('project.detail', compact('data'));
         } catch (\Throwable $th) {
             toast()->error("Error fetching project details.");
@@ -100,7 +121,11 @@ class ProjectController extends Controller
     public function delete($id)
     {
         try {
-            Project::findOrFail($id)->delete();
+            $data = Project::findOrFail($id);
+            Event::dispatch(new UserActivityLogged(
+                $data->name . " project deleted successfully !" . Auth::user()->email,
+            ));
+            $data->delete();
             return response()->json([
                 'status' => 'success',
                 'message' => "Project deleted successfully !",
