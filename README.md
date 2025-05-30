@@ -18,6 +18,13 @@ Tech stack used:
 - **Bootstrap**
 - **MySQL**
 
+## Demo Credentials
+
+You can use the following credentials to log in as a demo user:
+
+- **Email:** `kk@yopmail.com`
+- **Password:** `12345678`
+
 ## About Laravel
 
 
