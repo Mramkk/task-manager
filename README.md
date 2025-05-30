@@ -58,6 +58,8 @@ Tech stack used:
 - **CSS**
 - **Bootstrap**
 - **MySQL**
+- **JavaScript**
+- **jQuery**
 
 ## Demo Credentials
 
