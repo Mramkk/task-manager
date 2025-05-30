@@ -9,7 +9,7 @@
 
 ## Stack
 
-This project uses:
+Tech stack used:
 
 - **PHP 8.2**
 - **Laravel 12.0**
