@@ -4,6 +4,7 @@ use App\Http\Controllers\Activity\ActivityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Project\ProjectController;
+use App\Http\Controllers\Task\TaskController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -21,7 +22,16 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('project')->name('project.')->group(function () {
         Route::get('/list', [ProjectController::class, 'list'])->name('list');
         Route::post('/store', [ProjectController::class, 'store'])->name('store');
+        Route::get('detail/{id}', [ProjectController::class, 'detail'])->name('detail');
         Route::get('edit/{id}', [ProjectController::class, 'edit'])->name('edit');
         Route::post('delete/{id}', [ProjectController::class, 'delete'])->name('delete');
+    });
+    Route::prefix('task')->name('task.')->group(function () {
+        Route::get('/list/{id}', [TaskController::class, 'list'])->name('list');
+        Route::post('/store', [TaskController::class, 'store'])->name('store');
+        Route::get('detail/{id}', [TaskController::class, 'detail'])->name('detail');
+        Route::get('edit/{id}', [TaskController::class, 'edit'])->name('edit');
+        Route::post('delete/{id}', [TaskController::class, 'delete'])->name('delete');
+        Route::post('update-status/{id}', [TaskController::class, 'status'])->name('status');
     });
 });

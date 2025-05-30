@@ -86,7 +86,6 @@
 
     <!-- App js -->
     <script src="{{ url('assets/js/app.min.js') }}"></script>
-    <script src="{{ url('assets/js/service.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('js')
     @include('sweetalert::alert')

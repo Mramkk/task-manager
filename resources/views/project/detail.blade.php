@@ -1,12 +1,12 @@
 @extends('layouts.master')
 @section('title')
-    <title> Dashboard</title>
+    <title> Project Detail</title>
 @endsection
 @section('content')
     <div class="row px-3">
 
         <div class="page-title-box">
-            <h4 class="page-title">Dashboard</h4>
+            <h4 class="page-title">Project Detail</h4>
 
         </div>
 
@@ -14,16 +14,19 @@
     {{-- page header end --}}
     <div class="row">
         <div class="col-sm-12">
-            <div class="card widget-flat bg-primary">
+            <div class="card widget-flat">
                 <div class="card-body">
 
-                    <h2 class="text-light fw-normal mt-0" title="Number of Customers">
-                        Welcome
+                    <h2 class="fw-bold mt-0">
+                        {{ $data->name }}
                     </h2>
-                    <p class="text-light">Manage your projects and tasks from your personal dashboard.</p>
+                    <p>{{ $data->description }}</p>
 
-                    <button id="btn-create-project" type="button" class="btn btn-light waves-effect waves-light">Create
-                        Project</button>
+                    <p>
+                        <i class="uil-calender fs-4 text-primary"></i>
+                        Created
+                        {{ \Carbon\Carbon::parse($data->created_at)->format('M d, Y') }}
+                    </p>
                 </div> <!-- end card-body-->
             </div> <!-- end card-->
         </div> <!-- end col-->
@@ -33,7 +36,7 @@
     </div>
     <!-- end row -->
     <!-- row -->
-    <div class="row" id="project-create">
+    <div class="row" id="task-create">
         <div class="col-sm-12">
             <div class="card widget-flat">
                 <div class="card-body">
@@ -42,17 +45,23 @@
                         <div class="row justify-content-center">
                             <div class="col-md-8 mb-3">
                                 <h3 class="text-center fw-normal mt-0">
-                                    Create New Project
+                                    Create New Task
                                 </h3>
                             </div>
                             <input type="text" name="id" hidden>
+                            <input type="text" name="project_id" value="{{ $data->id }}" hidden>
                             <div class="col-md-7 mb-3">
-                                <input type="text" name="name" class="form-control " placeholder="Project Name">
-                                <span id="err-name" class="text-danger"></span>
+                                <input type="text" name="title" class="form-control " placeholder="Title">
+                                <span id="err-title" class="text-danger"></span>
                             </div>
                             <div class="col-md-7 mb-3">
-                                <textarea name="description" class="form-control" rows="3" placeholder="Project Description"></textarea>
+                                <textarea name="description" class="form-control" rows="3" placeholder="Description"></textarea>
                                 <span id="err-desc" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-7 mb-3">
+                                <input type="date" name="due_date" class="form-control" placeholder="Due Date">
+                                <span id="err-due-date" class="text-danger"></span>
+
                             </div>
 
 
@@ -71,13 +80,49 @@
     </div>
 
 
-    <!-- end row -->
-    <div class="row" id="project-list">
-
+    <div class="container">
+        <div class="row justify-content-between align-items-center mb-3">
+            <div class="col-md-3 mb-3">
+                <h3>Task</h3>
+            </div>
+            <div class="col-md-3 mb-3">
+                <input type="text" class="form-control" id="search-task" placeholder="Search by Title">
+            </div>
+            <div class="col-md-3 mb-3">
+                <select class="form-select" id="filter-status">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button class="btn btn-primary" id="btn-create-task">Create Task</button>
+            </div>
+        </div>
     </div>
-    <!-- end row -->
 
-    <div class="d-flex justify-content-end">
+    <!-- end container -->
+    <!-- table-->
+
+    <div class="container">
+        <div class="row" id="task-table">
+            <table class="table table-bordered table-centered mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="task-table-body">
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end mt-3">
         <div class="pagination" id="pagination"></div>
 
     </div>
@@ -85,18 +130,19 @@
 
 @section('js')
     <script>
-        $('#project-create').hide();
+        $('#task-create').hide();
+        $('#task-table').hide();
         $(document).ready(function() {
             datalist();
-            $('#btn-create-project').click(function() {
-                $('#project-create').toggle();
+            $('#btn-create-task').click(function() {
+                $('#task-create').toggle();
             });
 
             // Create project-create
-            $('#project-create').on('submit', 'form', function(e) {
+            $('#task-create').on('submit', 'form', function(e) {
                 e.preventDefault();
                 $.ajax({
-                    url: "{{ route('project.store') }}",
+                    url: "{{ route('task.store') }}",
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(res) {
@@ -104,7 +150,7 @@
                         if (res.status === 'success') {
                             // Reset the form
                             $('form')[0].reset();
-                            $('#project-create').hide();
+
                             datalist();
 
                             Toast.fire({
@@ -112,8 +158,9 @@
                                 title: res.message
                             });
                         } else if (res.status === 'error') {
-                            $('#err-name').text(res.errors.name || '');
+                            $('#err-title').text(res.errors.title || '');
                             $('#err-desc').text(res.errors.description || '');
+                            $('#err-due-date').text(res.errors.due_date || '');
                         }
 
                     },
@@ -128,15 +175,17 @@
 
                 const id = $(this).val();
                 $.ajax({
-                    url: "{{ url('project/edit') }}/" + id,
+                    url: "{{ url('task/edit') }}/" + id,
                     type: 'GET',
                     success: function(res) {
                         if (res.status === 'success') {
                             // Populate the form with project data
-                            $('input[name="name"]').val(res.data.name);
+                            $('input[name="title"]').val(res.data.title);
                             $('textarea[name="description"]').val(res.data.description);
                             $('input[name="id"]').val(res.data.id);
-                            $('#project-create').show();
+                            $('input[name="due_date"]').val(res.data.due_date ? new Date(res
+                                .data.due_date).toISOString().split('T')[0] : '');
+                            $('#task-create').show();
                         } else {
                             Toast.fire({
                                 icon: "error",
@@ -148,6 +197,49 @@
                 });
 
             });
+
+            // Handle status change
+            $(document).on('change', 'select[data-task-id]', function() {
+                const taskId = $(this).data('task-id');
+                const status = $(this).val();
+
+                $.ajax({
+                    url: "{{ url('task/update-status') }}/" + taskId,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        status: status
+                    },
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            Toast.fire({
+                                icon: "success",
+                                title: res.message
+                            });
+                            datalist();
+                        } else {
+                            Toast.fire({
+                                icon: "error",
+                                title: res.message
+                            });
+                        }
+                    },
+                });
+            });
+
+            // Handle search input
+
+            $("#search-task").on('change keyup paste', function() {
+                datalist($(this).val(), "");
+            });
+
+            // Handle filter-status
+            $("#filter-status").on('change', function() {
+                datalist("", $(this).val());
+
+            });
+
+
 
             // Handle delete button click
             $(document).on('click', '#btn-delete', function(e) {
@@ -164,7 +256,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ url('project/delete') }}/" + id,
+                            url: "{{ url('task/delete') }}/" + id,
                             type: 'POST',
                             data: {
                                 _token: '{{ csrf_token() }}'
@@ -192,14 +284,22 @@
 
         });
 
-        function datalist() {
+        function datalist(search = '', status = '') {
+            const segments = window.location.pathname.split('/');
+            const projectId = segments[segments.length - 1];
+            $('#task-table').hide();
+            $('#task-create').hide();
+
             $.ajax({
-                url: "{{ route('project.list') }}",
+                url: "{{ route('task.list', ['id' => '__ID__']) }}".replace('__ID__', projectId) + "?search=" +
+                    search + "&status=" + status,
                 type: 'GET',
+
                 success: function(res) {
                     if (res.status === 'success') {
+                        $('#task-table').show();
+                        renderTasks(res.data.data);
                         renderPagination(res.data.links);
-                        renderProjects(res.data.data);
 
                     }
 
@@ -208,55 +308,38 @@
             });
         }
 
-        const renderProjects = (projects) => {
-            const container = document.getElementById('project-list');
-            container.innerHTML = '';
-            projects.forEach(project => {
-                container.innerHTML += `
-        <div class="col-md-4">
-            <div class="card widget-flat">
-                <div class="card-body">
-                    <h3 class="fw-bold mt-0">
-                        ${project.name}
-                    </h3>
-                    <p>${shortenString(project.description) || 'N/A'}</p>
-                    <div class="d-flex">
-                      <p class="fw-bold fs-4 me-2">
-                        <i class="uil-clipboard-notes fs-3 text-primary"></i>
-                       Task
-                        <span class="badge bg-primary">${project.tasks_count}</span>
-                        </p>
-                        <p class="fw-bold fs-4">
-                        <i class="uil-check-circle fs-3 text-success"></i>
-                        Completed
-                        ${project.tasks_count === 0 ? 0 : Math.round((project.completed_tasks_count / project.tasks_count) * 100)} %
-                        </p>
 
-                    </div>
-
-                    <p>
-                        <i class="uil-calender fs-4 text-primary"></i>
-                        Created
-                        ${new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
-                    </p>
-
-                    <div class="text-center mt-3">
-
-                         <a href="/project/detail/${project.id}" class="btn btn-primary waves-effect waves-light">View Project</a>
-                         <button id="btn-edit" type="button"  value="${project.id}" class="btn btn-secondary waves-effect waves-light"><i class="uil-pen"></i></button>
-                        <button id="btn-delete" value="${project.id}"  class="btn btn-danger waves-effect waves-light"><i class="uil-trash-alt"></i></button>
-
-
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
-                `;
+        renderTasks = (data) => {
+            const taskTableBody = document.getElementById('task-table-body');
+            taskTableBody.innerHTML = '';
+            if (data.length === 0) {
+                taskTableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center">No tasks found</td>
+            </tr>
+            `;
+                return;
+            }
+            data.forEach((task, idx) => {
+                const bgColor = idx % 2 === 0 ? '#c2d9ff' : '#c2ffef';
+                taskTableBody.innerHTML += `
+            <tr style="background-color: ${bgColor};">
+                <td>${shortenString(task.title)}</td>
+                <td>${task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                <td>
+                    <select class="form-select form-select-sm" data-task-id="${task.id}">
+                        <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    </select>
+                </td>
+                <td class="text-center">
+                <button class="btn btn-primary btn-sm" id="btn-edit" value="${task.id}">Edit</button>
+                <button class="btn btn-danger btn-sm" id="btn-delete" value="${task.id}">Delete</button>
+                </td>
+            </tr>
+            `;
             });
         };
-
         const renderPagination = (links) => {
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
@@ -289,13 +372,13 @@
                         // You may want to update your list here
                         renderPagination(res.data.links);
                         // Add code to update your project list if needed
-                        renderProjects(res.data.data);
+                        renderTasks(res.data.data);
                     }
                 });
             });
         };
 
-        function shortenString(text, maxLength = 35) {
+        function shortenString(text, maxLength = 70) {
             if (text.length <= maxLength) return text;
             return text.substring(0, maxLength) + '...';
         }

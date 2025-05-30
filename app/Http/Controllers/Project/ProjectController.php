@@ -15,7 +15,10 @@ class ProjectController extends Controller
     {
         try {
             $data = Project::orderBy('created_at', 'desc')
-                ->paginate(1);
+                ->withCount('tasks')
+                ->withCount('pendingTasks')
+                ->withCount('completedTasks')
+                ->paginate(10);
             return response()->json([
                 'status' => 'success',
                 'data' => $data,
@@ -82,6 +85,18 @@ class ProjectController extends Controller
             ]);
         }
     }
+
+    public function detail($id)
+    {
+        try {
+            $data = Project::findOrFail($id);
+            return view('project.detail', compact('data'));
+        } catch (\Throwable $th) {
+            toast()->error("Error fetching project details.");
+            return back();
+        }
+    }
+
     public function delete($id)
     {
         try {
@@ -93,7 +108,7 @@ class ProjectController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => "exception",
-                'message' => "Error fetching project details.",
+                'message' => "Error please try again later.",
             ]);
         }
     }
